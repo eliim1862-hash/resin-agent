@@ -66,7 +66,8 @@ Write the complete report in Persian as instructed.
 
 def generate_report() -> str:
     api_key = os.environ["ANTHROPIC_API_KEY"].strip()
-client = anthropic.Anthropic(api_key=api_key)
+    client = anthropic.Anthropic(api_key=api_key)
+    
     response = client.messages.create(
         model="claude-opus-4-5",
         max_tokens=8000,
