@@ -14,7 +14,7 @@ def generate_report():
     response = requests.post(
         url="https://openrouter.ai/api/v1/chat/completions",
         headers={"Authorization": "Bearer " + OPENROUTER_API_KEY, "Content-Type": "application/json"},
-        json={"model": "meta-llama/llama-3.3-70b-instruct:free", "messages": [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": user_prompt}], "max_tokens": 4000},
+        json={"model": "deepseek/deepseek-r1:free", "messages": [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": user_prompt}], "max_tokens": 4000},
         timeout=120
     )
     print("Status: " + str(response.status_code))
@@ -31,17 +31,4 @@ def send_telegram(text):
     url = "https://api.telegram.org/bot" + BOT_TOKEN + "/sendMessage"
     for part in [text[i:i+4000] for i in range(0, len(text), 4000)]:
         payload = {"chat_id": CHAT_ID, "text": part, "parse_mode": "Markdown", "disable_web_page_preview": True}
-        r = requests.post(url, json=payload, timeout=30)
-        if not r.json().get("ok"):
-            payload.pop("parse_mode")
-            requests.post(url, json=payload, timeout=30)
-
-def main():
-    print("Agent started — " + str(datetime.now()))
-    report = generate_report()
-    print("Report length: " + str(len(report)))
-    send_telegram(report)
-    print("Done!")
-
-if __name__ == "__main__":
-    main()
+        r = requests.post(url, json=payload, timeout=
