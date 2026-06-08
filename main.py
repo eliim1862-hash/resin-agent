@@ -1,30 +1,49 @@
 import os
 import requests
 from datetime import datetime, timezone
-import anthropic
 
 BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"].strip()
 CHAT_ID = os.environ["TELEGRAM_CHAT_ID"].strip()
+OPENROUTER_API_KEY = os.environ["OPENROUTER_API_KEY"].strip()
 
 SYSTEM_PROMPT = """You are a senior R&D director and technology scout specializing in Pressure Sensitive Adhesives (PSA), Acrylic Emulsions, Vinyl Acrylic Resins, Styrene Acrylic Resins, Water-Based Adhesives, Hot Melt Adhesives, Reactive Adhesives, Coatings, Sealants, Polymer Emulsions, Sustainable Adhesives. Write the full report IN PERSIAN (Farsi). Use Markdown with emojis. Report length: 2500-4000 words. REPORT STRUCTURE: 🧪 گزارش هوشمند رزین و چسب | {date} 📌 خلاصه اجرایی (5-8 مهم‌ترین رویداد) 🆕 محصولات جدید (عنوان، شرکت، 15-20 خط خلاصه، اهمیت فنی، اهمیت تجاری، منبع URL) 📋 پتنت‌های جدید (عنوان، متقاضی، تاریخ، 15-20 خط خلاصه، کاربرد صنعتی، منبع URL) 🔬 مقالات علمی (عنوان، نویسندگان، مجله، 15-20 خط خلاصه، یافته‌های کلیدی، منبع URL) 📰 اخبار بازار و صنعت (عنوان، سازمان، 15-20 خط خلاصه، تاثیر بر صنعت، منبع URL) 💡 فرصت‌های نوآوری (با رتبه‌بندی: پتانسیل بالا / متوسط / پایین) 🏆 3 ایده محصول ارزشمند هفته (مفهوم، پتانسیل بازار، امکان‌پذیری فنی، اقدام پیشنهادی) ─────────────────  🤖 Resin & Adhesive Intelligence Agent"""
 
 def generate_report():
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    user_prompt = "Search the web for the last 24 hours only. Queries: 1. pressure sensitive adhesive new product 2025 2. acrylic emulsion resin patent 2025 3. styrene acrylic vinyl acrylic resin news 4. Henkel OR Arkema OR Synthomer adhesive 2025 5. BASF OR Dow acrylic resin new 2025 6. sustainable bio-based adhesive 2025 7. adhesive resin acquisition merger 2025 8. PSA crosslinker monomer innovation 2025. Today: " + today + ". Write the complete report in Persian."
-    api_key = os.environ["ANTHROPIC_API_KEY"].strip()
-    client = anthropic.Anthropic(api_key=api_key)
-    response = client.messages.create(
-        model="claude-opus-4-5",
-        max_tokens=8000,
-        system=SYSTEM_PROMPT,
-        tools=[{"type": "web_search_20250305", "name": "web_search"}],
-        messages=[{"role": "user", "content": user_prompt}]
+    user_prompt = f"""Today is {today}. Search and find the latest news from the last 24 hours about:
+1. Pressure sensitive adhesive new products 2025
+2. Acrylic emulsion resin patents 2025
+3. Styrene acrylic vinyl acrylic resin news
+4. Henkel OR Arkema OR Synthomer adhesive announcements
+5. BASF OR Dow acrylic resin new products
+6. Sustainable bio-based adhesive innovations
+7. Adhesive resin acquisitions mergers partnerships
+8. PSA crosslinker monomer innovations
+
+Write the complete detailed report in Persian (Farsi) as instructed."""
+
+    response = requests.post(
+        url="https://openrouter.ai/api/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "model": "google/gemini-2.0-flash-exp:free",
+            "messages": [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt}
+            ],
+            "max_tokens": 8000,
+        },
+        timeout=120
     )
-    full_text = ""
-    for block in response.content:
-        if hasattr(block, "text"):
-            full_text += block.text
-    return full_text or "گزارش تولید نشد."
+
+    data = response.json()
+    if "choices" in data:
+        return data["choices"][0]["message"]["content"]
+    else:
+        return f"خطا: {data}"
 
 def send_telegram(text):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
@@ -38,6 +57,7 @@ def send_telegram(text):
 def main():
     print(f"Agent started — {datetime.now()}")
     report = generate_report()
+    print(f"Report generated — {len(report)} chars")
     send_telegram(report)
     print("Done!")
 
