@@ -11,7 +11,7 @@ SYSTEM_PROMPT = "You are a senior R&D director specializing in Pressure Sensitiv
 def generate_report():
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     user_prompt = "Today is " + today + ". Write a detailed R&D intelligence report in Persian about pressure sensitive adhesives, acrylic emulsions, vinyl acrylic, styrene acrylic and resin technology. Include new products, patents, research papers, market news, innovation opportunities and top 3 product ideas."
-    r = requests.post("https://openrouter.ai/api/v1/chat/completions", headers={"Authorization": "Bearer " + OPENROUTER_API_KEY, "Content-Type": "application/json"}, json={"model": "deepseek/deepseek-r1:free", "messages": [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": user_prompt}], "max_tokens": 4000}, timeout=120)
+    r = requests.post("https://openrouter.ai/api/v1/chat/completions", headers={"Authorization": "Bearer " + OPENROUTER_API_KEY, "Content-Type": "application/json"}, json={"model": "google/gemma-3-27b-it:free", "messages": [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": user_prompt}], "max_tokens": 4000}, timeout=120)
     print("Status: " + str(r.status_code))
     data = r.json()
     print("Preview: " + str(data)[:300])
